@@ -1,0 +1,23 @@
+﻿@inherits LayoutComponentBase
+@using Microsoft.FluentUI.AspNetCore.Components
+
+<FluentStack Orientation="Orientation.Vertical" Style="min-height: 100vh;">
+    <header class="layout-header">
+        <FluentStack Orientation="Orientation.Vertical" VerticalGap="4" Class="layout-header__content">
+            <h1 class="layout-title">MySpeaker</h1>
+            <p class="layout-subtitle">Wireless playback console</p>
+        </FluentStack>
+    </header>
+
+    <main class="layout-main">
+        <section class="layout-content">
+            @Body
+        </section>
+    </main>
+</FluentStack>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>

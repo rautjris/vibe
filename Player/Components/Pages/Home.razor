@@ -1,0 +1,234 @@
+﻿@page "/"
+
+@using System.Globalization
+@using Microsoft.FluentUI.AspNetCore.Components
+
+@inject ISpeakerApi Speaker
+@inject StreamStore StreamStore
+@inject ILogger<Home> Logger
+
+<PageTitle>Dashboard</PageTitle>
+
+<FluentStack Orientation="Orientation.Vertical" VerticalGap="24" Class="dashboard-shell">
+    <FluentTabs Class="dashboard-tabs">
+    <FluentTab Id="status-tab" Label="Playback status">
+        <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
+        <FluentCard>
+                    <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
+                        <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="12" VerticalGap="8" Wrap="true" Class="card-heading">
+                            <div class="card-heading__text">
+                                <h2 class="card-title">Playback Status</h2>
+                                <p class="card-subtitle">Live data from the speaker</p>
+                            </div>
+                            <FluentButton Appearance="Appearance.Stealth" Disabled="@_isBusy" OnClick="() => RefreshStatusAsync(false, true)">
+                                Refresh
+                            </FluentButton>
+                        </FluentStack>
+
+                        @if (_status is null)
+                        {
+                            <div class="empty-state">
+                                <p>Speaker status is unavailable. Check the connection settings and try again.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <FluentStack Orientation="Orientation.Vertical" VerticalGap="20">
+                                <FluentStack Orientation="Orientation.Vertical" VerticalGap="6">
+                                    <h3 class="status-title">@_status.Title</h3>
+                                    <span class="status-meta">@_status.Artist</span>
+                                    <span class="status-meta">@_status.Album</span>
+                                </FluentStack>
+
+                                <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="10" VerticalGap="10" Wrap="true">
+                                    <FluentBadge>@_status.Mode</FluentBadge>
+                                    <FluentBadge>@_status.StatusLabel</FluentBadge>
+                                    <FluentBadge>@_status.Channel</FluentBadge>
+                                </FluentStack>
+
+                                <div class="detail-grid">
+                                    <div class="detail-tile">
+                                        <span class="detail-label">Position</span>
+                                        <span class="detail-value">@_status.PositionDisplay</span>
+                                    </div>
+                                    <div class="detail-tile">
+                                        <span class="detail-label">Playlist</span>
+                                        <span class="detail-value">@_status.PlaylistDisplay</span>
+                                    </div>
+                                    <div class="detail-tile">
+                                        <span class="detail-label">Loop Mode</span>
+                                        <span class="detail-value">@_status.LoopMode</span>
+                                    </div>
+                                    <div class="detail-tile">
+                                        <span class="detail-label">Volume</span>
+                                        <span class="detail-value">@_status.Volume</span>
+                                    </div>
+                                    <div class="detail-tile">
+                                        <span class="detail-label">Mute</span>
+                                        <span class="detail-value">@(_status.IsMuted ? "Muted" : "Active")</span>
+                                    </div>
+                                    <div class="detail-tile">
+                                        <span class="detail-label">Equalizer</span>
+                                        <span class="detail-value">@(_status.Equalizer is null ? "—" : _status.Equalizer)</span>
+                                    </div>
+                                </div>
+                            </FluentStack>
+                        }
+                    </FluentStack>
+                </FluentCard>
+            </FluentStack>
+        </FluentTab>
+
+        <FluentTab Id="controls-tab" Label="Controls">
+            <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
+                @if (!string.IsNullOrWhiteSpace(_errorMessage))
+                {
+                    <FluentMessageBar Intent="MessageIntent.Error" AllowDismiss="true" Title="Speaker command">
+                        @_errorMessage
+                    </FluentMessageBar>
+                }
+                else if (!string.IsNullOrWhiteSpace(_successMessage))
+                {
+                    <FluentMessageBar Intent="MessageIntent.Success" AllowDismiss="true" Title="Speaker command">
+                        @_successMessage
+                    </FluentMessageBar>
+                }
+
+                <FluentCard>
+                    <FluentStack Orientation="Orientation.Vertical" VerticalGap="20">
+                        <div class="card-heading__text">
+                            <h2 class="card-title">Controls</h2>
+                            <p class="card-subtitle">Send commands directly to the speaker</p>
+                        </div>
+
+                        <FluentStack Orientation="Orientation.Vertical" VerticalGap="20">
+                            <FluentStack Orientation="Orientation.Vertical" VerticalGap="12">
+                                <h3 class="section-title">Transport</h3>
+                                <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" VerticalGap="8" Wrap="true">
+                                    <FluentButton Appearance="Appearance.Stealth" Disabled="@_isBusy" OnClick="PlayPreviousAsync">Prev</FluentButton>
+                                    <FluentButton Appearance="Appearance.Stealth" Disabled="@_isBusy" OnClick="PauseAsync">Pause</FluentButton>
+                                    <FluentButton Appearance="Appearance.Accent" Disabled="@_isBusy" OnClick="ResumeAsync">Play</FluentButton>
+                                    <FluentButton Appearance="Appearance.Stealth" Disabled="@_isBusy" OnClick="StopAsync">Stop</FluentButton>
+                                    <FluentButton Appearance="Appearance.Stealth" Disabled="@_isBusy" OnClick="PlayNextAsync">Next</FluentButton>
+                                </FluentStack>
+                            </FluentStack>
+
+                            <FluentStack Orientation="Orientation.Vertical" VerticalGap="12">
+                                <h3 class="section-title">Volume</h3>
+                                <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="12" VerticalGap="8" Wrap="true" Class="volume-row">
+                                    <FluentSlider @bind-Value="_volume" @bind-Value:after="OnVolumeChangedAsync" Min="0" Max="100" Step="1" Disabled="@_isBusy" Style="flex:1; min-width:220px;" />
+                                    <span class="volume-value">@_volume%</span>
+                                </FluentStack>
+                                <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" VerticalGap="8" Wrap="true">
+                                    <FluentButton Appearance="Appearance.Stealth" Disabled="@_isBusy" OnClick="VolumeDownAsync">-6</FluentButton>
+                                    <FluentButton Appearance="Appearance.Stealth" Disabled="@_isBusy" OnClick="ToggleMuteAsync">Mute</FluentButton>
+                                    <FluentButton Appearance="Appearance.Stealth" Disabled="@_isBusy" OnClick="VolumeUpAsync">+6</FluentButton>
+                                </FluentStack>
+                            </FluentStack>
+
+                            <FluentStack Orientation="Orientation.Vertical" VerticalGap="12">
+                                <h3 class="section-title">Input Source</h3>
+                                <FluentSelect TOption="string" @bind-SelectedOption="_selectedSource" @bind-SelectedOption:after="OnSourceChangedAsync" Disabled="@_isBusy" Style="min-width:240px;">
+                                    <FluentOption TOption="string" Value="" Disabled="true" Selected="@string.IsNullOrWhiteSpace(_selectedSource)">
+                                        Select an input
+                                    </FluentOption>
+                                    @foreach (var source in InputSources)
+                                    {
+                                        <FluentOption TOption="string" Value="@source.Key">@source.Label</FluentOption>
+                                    }
+                                </FluentSelect>
+                            </FluentStack>
+
+                            <FluentStack Orientation="Orientation.Vertical" VerticalGap="12">
+                                <h3 class="section-title">Loop Mode</h3>
+                                <FluentSelect TOption="string" @bind-SelectedOption="_selectedLoop" @bind-SelectedOption:after="OnLoopChangedAsync" Disabled="@_isBusy" Style="min-width:240px;">
+                                    <FluentOption TOption="string" Value="" Disabled="true" Selected="@string.IsNullOrWhiteSpace(_selectedLoop)">
+                                        Select loop mode
+                                    </FluentOption>
+                                    @foreach (var loop in LoopModes)
+                                    {
+                                        <FluentOption TOption="string" Value="@loop.Value.ToString(CultureInfo.InvariantCulture)">@loop.Label</FluentOption>
+                                    }
+                                </FluentSelect>
+                            </FluentStack>
+
+                            <FluentStack Orientation="Orientation.Vertical" VerticalGap="12">
+                                <h3 class="section-title">Quick Stream</h3>
+                                <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="12" VerticalGap="8" Wrap="true">
+                                    <FluentTextField Placeholder="https://" @bind-Value="_quickStreamUrl" @bind-Value:event="oninput" Disabled="@_isBusy" Style="flex:1; min-width:260px;" />
+                                    <FluentButton Appearance="Appearance.Accent" Disabled="@(_isBusy || string.IsNullOrWhiteSpace(_quickStreamUrl))" OnClick="PlayQuickUrl">Play</FluentButton>
+                                </FluentStack>
+                            </FluentStack>
+                        </FluentStack>
+                    </FluentStack>
+                </FluentCard>
+            </FluentStack>
+        </FluentTab>
+
+        <FluentTab Id="streams-tab" Label="Saved streams">
+            <FluentStack Orientation="Orientation.Vertical" VerticalGap="16">
+                <FluentCard>
+                    <FluentStack Orientation="Orientation.Vertical" VerticalGap="20">
+                        <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="12" VerticalGap="8" Wrap="true" Class="card-heading">
+                            <div class="card-heading__text">
+                                <h2 class="card-title">Saved Streams</h2>
+                                <p class="card-subtitle">Keep your favourite stations handy</p>
+                            </div>
+                            <FluentButton Appearance="Appearance.Stealth" Disabled="@_isBusy" OnClick="BeginAddStream">New Stream</FluentButton>
+                        </FluentStack>
+
+                        <FluentStack Orientation="Orientation.Vertical" VerticalGap="12">
+                            @if (_streams.Count == 0)
+                            {
+                                <p>No streams saved yet. Add your first stream below.</p>
+                            }
+                            else
+                            {
+                                @foreach (var stream in _streams)
+                                {
+                                    <FluentCard Class="stream-card" AreaRestricted="true">
+                                        <FluentStack Orientation="Orientation.Vertical" VerticalGap="10">
+                                            <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" VerticalGap="6" Wrap="true" Class="stream-card__header">
+                                                <h3 class="stream-name">@stream.Name</h3>
+                                                <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" VerticalGap="6" Wrap="true">
+                                                    <FluentButton Appearance="Appearance.Accent" Disabled="@_isBusy" OnClick="() => PlaySavedStream(stream)">Play</FluentButton>
+                                                    <FluentButton Appearance="Appearance.Stealth" Disabled="@_isBusy" OnClick="() => BeginEditStream(stream)">Edit</FluentButton>
+                                                    <FluentButton Appearance="Appearance.Outline" Disabled="@_isBusy" OnClick="() => DeleteStreamAsync(stream)">Delete</FluentButton>
+                                                </FluentStack>
+                                            </FluentStack>
+                                            <span class="stream-url">@stream.Url</span>
+                                            @if (!string.IsNullOrWhiteSpace(stream.Description))
+                                            {
+                                                <span class="stream-description">@stream.Description</span>
+                                            }
+                                        </FluentStack>
+                                    </FluentCard>
+                                }
+                            }
+                        </FluentStack>
+
+                        <EditForm Model="_draft" OnValidSubmit="SaveStreamAsync">
+                            <DataAnnotationsValidator />
+                            <FluentStack Orientation="Orientation.Vertical" VerticalGap="12">
+                                <FluentTextField Label="Stream name" @bind-Value="_draft.Name" Required="true" Disabled="@_isBusy" />
+                                <ValidationMessage For="() => _draft.Name" />
+                                <FluentTextField Label="Stream URL" @bind-Value="_draft.Url" Required="true" Disabled="@_isBusy" />
+                                <ValidationMessage For="() => _draft.Url" />
+                                <FluentTextArea Label="Notes (optional)" Rows="3" @bind-Value="_draft.Description" Disabled="@_isBusy" />
+                                <FluentStack Orientation="Orientation.Horizontal" HorizontalGap="8" VerticalGap="8" Wrap="true">
+                                    <FluentButton Appearance="Appearance.Accent" Type="ButtonType.Submit" Disabled="@_isBusy">@_formActionLabel</FluentButton>
+                                    @if (_isEditing)
+                                    {
+                                        <FluentButton Appearance="Appearance.Stealth" Type="ButtonType.Button" Disabled="@_isBusy" OnClick="BeginAddStream">Cancel</FluentButton>
+                                    }
+                                </FluentStack>
+                            </FluentStack>
+                        </EditForm>
+                    </FluentStack>
+                </FluentCard>
+            </FluentStack>
+        </FluentTab>
+    </FluentTabs>
+</FluentStack>
+
+

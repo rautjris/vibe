@@ -1,0 +1,55 @@
+.layout-header {
+    background: linear-gradient(140deg, rgba(90, 136, 255, 0.24), rgba(101, 68, 255, 0.18), rgba(225, 110, 255, 0.16));
+    border-bottom: 1px solid var(--neutral-stroke-layer-rest, rgba(255, 255, 255, 0.12));
+    padding: 28px 16px;
+}
+
+.layout-header__content {
+    width: min(1120px, 100%);
+    margin: 0 auto;
+}
+
+.layout-title {
+    margin: 0;
+    font-size: clamp(1.6rem, 2.8vw, 2.4rem);
+    letter-spacing: 0.04em;
+}
+
+.layout-subtitle {
+    margin: 0;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    color: var(--neutral-foreground-hint, rgba(255, 255, 255, 0.65));
+}
+
+.layout-main {
+    flex: 1;
+    padding: 0 0 48px;
+}
+
+.layout-content {
+    width: min(1120px, 100%);
+    margin: 0 auto;
+}
+
+#blazor-error-ui {
+    color-scheme: light only;
+    background: lightyellow;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    box-sizing: border-box;
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+#blazor-error-ui .dismiss {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+}
