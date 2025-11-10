@@ -1,4 +1,4 @@
-﻿@using Microsoft.FluentUI.AspNetCore.Components
+﻿@using MudBlazor
 
 <!DOCTYPE html>
 <html lang="en">
@@ -7,23 +7,43 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
-    <link rel="stylesheet" href="@Assets["_content/Microsoft.FluentUI.AspNetCore.Components/css/reboot.css"]" />
-    <link rel="stylesheet" href="@Assets["_content/Microsoft.FluentUI.AspNetCore.Components/css/dark-theme.css"]" />
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
+    <link href="@Assets["_content/MudBlazor/MudBlazor.min.css"]" rel="stylesheet" />
     <link rel="stylesheet" href="@Assets["fluent-dashboard.css"]" />
     <link rel="stylesheet" href="@Assets["MySpeaker.styles.css"]" />
     <ImportMap />
     <link rel="icon" type="image/png" href="favicon.png" />
-    <HeadOutlet />
+    <HeadOutlet @rendermode="InteractiveServer" />
 </head>
 
 <body>
-    <FluentDesignSystemProvider Style="min-height: 100vh;">
-        <FluentDesignTheme Mode="DesignThemeModes.Dark">
-            <Routes />
-            <ReconnectModal />
-        </FluentDesignTheme>
-    </FluentDesignSystemProvider>
+    <MudThemeProvider Theme="@_theme" IsDarkMode="true" />
+    <MudPopoverProvider />
+    <MudDialogProvider />
+    <MudSnackbarProvider />
+    
+    <Routes @rendermode="InteractiveServer" />
+    <ReconnectModal />
+    
     <script src="@Assets["_framework/blazor.web.js"]"></script>
+    <script src="@Assets["_content/MudBlazor/MudBlazor.min.js"]"></script>
 </body>
 
 </html>
+
+@code {
+    private readonly MudTheme _theme = new()
+ {
+        PaletteDark = new PaletteDark
+{
+            Primary = "#74c2ff",
+            Secondary = "#b084ff",
+     AppbarBackground = "#080b12",
+         Background = "#080b12",
+            Surface = "#1a1f2e",
+   DrawerBackground = "#080b12",
+     DrawerText = "#eef1f6",
+   DrawerIcon = "#eef1f6"
+    }
+  };
+}

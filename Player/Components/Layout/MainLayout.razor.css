@@ -1,12 +1,13 @@
 .layout-header {
-    background: linear-gradient(140deg, rgba(90, 136, 255, 0.24), rgba(101, 68, 255, 0.18), rgba(225, 110, 255, 0.16));
-    border-bottom: 1px solid var(--neutral-stroke-layer-rest, rgba(255, 255, 255, 0.12));
-    padding: 28px 16px;
+    background: linear-gradient(140deg, rgba(90, 136, 255, 0.24), rgba(101, 68, 255, 0.18), rgba(225, 110, 255, 0.16)) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 
 .layout-header__content {
-    width: min(1120px, 100%);
+    width: 100%;
+    max-width: 1120px;
     margin: 0 auto;
+    padding: 8px 16px;
 }
 
 .layout-title {
@@ -17,19 +18,19 @@
 
 .layout-subtitle {
     margin: 0;
-    letter-spacing: 0.12em;
+ letter-spacing: 0.12em;
     text-transform: uppercase;
     font-size: 0.8rem;
-    color: var(--neutral-foreground-hint, rgba(255, 255, 255, 0.65));
+    color: rgba(255, 255, 255, 0.65);
 }
 
 .layout-main {
-    flex: 1;
-    padding: 0 0 48px;
+    padding: 0 16px 48px;
 }
 
 .layout-content {
-    width: min(1120px, 100%);
+    width: 100%;
+    max-width: 1120px;
     margin: 0 auto;
 }
 
@@ -37,7 +38,7 @@
     color-scheme: light only;
     background: lightyellow;
     bottom: 0;
-    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
     box-sizing: border-box;
     display: none;
     left: 0;

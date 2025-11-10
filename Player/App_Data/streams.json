@@ -1,1 +1,14 @@
-[]
+[
+  {
+    "id": "915c2753-fe3b-4953-94f3-305de90f5c90",
+    "name": "ww",
+    "url": "https://www.mudblazor.com/components/tabs#simple-tabs",
+    "description": "ww"
+  },
+  {
+    "id": "9466b627-e256-48b0-bf21-c36b999fcc3f",
+    "name": "ss",
+    "url": "https://www.mudblazor.com/components/tabs#simple-tabs",
+    "description": null
+  }
+]

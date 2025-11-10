@@ -129,13 +129,15 @@ namespace MySpeaker.Components.Pages
             }
         }
 
-        private Task OnVolumeChangedAsync()
+        private Task OnVolumeChangedAsync(int value)
         {
+            _volume = value;
             return SendSpeakerCommand(() => Speaker.SetVolumeAsync(_volume), $"Volume set to {_volume}");
         }
 
-        private Task OnSourceChangedAsync()
+        private Task OnSourceChangedAsync(string value)
         {
+            _selectedSource = value;
             if (string.IsNullOrWhiteSpace(_selectedSource))
             {
                 return Task.CompletedTask;
@@ -144,8 +146,9 @@ namespace MySpeaker.Components.Pages
             return SendSpeakerCommand(() => Speaker.SwitchModeAsync(_selectedSource), $"Source switched to {_selectedSource}");
         }
 
-        private async Task OnLoopChangedAsync()
+        private async Task OnLoopChangedAsync(string value)
         {
+            _selectedLoop = value;
             if (string.IsNullOrWhiteSpace(_selectedLoop))
             {
                 return;

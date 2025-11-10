@@ -6,13 +6,13 @@ html,
 body {
     margin: 0;
     min-height: 100%;
-    font-family: "Segoe UI", Arial, sans-serif;
-    background: var(--neutral-layer-1, #080b12);
-    color: var(--neutral-foreground-rest, #eef1f6);
+    font-family: "Segoe UI", "Roboto", Arial, sans-serif;
+    background: #080b12;
+    color: #eef1f6;
 }
 
 a {
-    color: var(--accent-foreground-rest, #74c2ff);
+    color: #74c2ff;
 }
 
 a:hover {
@@ -20,9 +20,8 @@ a:hover {
 }
 
 .dashboard-shell {
-    width: min(1120px, 100%);
-    margin: 0 auto;
-    padding: 32px 16px 56px;
+    width: 100%;
+    padding: 24px 0;
 }
 
 .card-heading {
@@ -32,7 +31,7 @@ a:hover {
 
 .card-heading__text {
     display: flex;
-    flex-direction: column;
+ flex-direction: column;
     gap: 4px;
     min-width: 220px;
     flex: 1;
@@ -46,7 +45,7 @@ a:hover {
 
 .card-subtitle {
     margin: 0;
-    color: var(--neutral-foreground-hint, rgba(255, 255, 255, 0.65));
+    color: rgba(255, 255, 255, 0.65);
     text-transform: uppercase;
     letter-spacing: 0.12em;
     font-size: 0.78rem;
@@ -54,7 +53,7 @@ a:hover {
 
 .empty-state {
     padding: 12px 0;
-    color: var(--neutral-foreground-subtle, rgba(255, 255, 255, 0.7));
+    color: rgba(255, 255, 255, 0.7);
 }
 
 .status-title {
@@ -64,18 +63,18 @@ a:hover {
 }
 
 .status-meta {
-    color: var(--neutral-foreground-subtle, rgba(255, 255, 255, 0.72));
+    color: rgba(255, 255, 255, 0.72);
     font-size: 0.95rem;
 }
 
 .detail-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 12px;
+  gap: 12px;
 }
 
 .detail-tile {
-    border: 1px solid var(--neutral-stroke-layer-rest, rgba(255, 255, 255, 0.16));
+    border: 1px solid rgba(255, 255, 255, 0.16);
     border-radius: 14px;
     padding: 12px;
     backdrop-filter: blur(10px);
@@ -86,10 +85,10 @@ a:hover {
 }
 
 .detail-label {
-    font-size: 0.72rem;
+  font-size: 0.72rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: var(--neutral-foreground-hint, rgba(255, 255, 255, 0.6));
+    color: rgba(255, 255, 255, 0.6);
 }
 
 .detail-value {
@@ -114,7 +113,7 @@ a:hover {
 
 .stream-card {
     border-radius: 16px;
-    border: 1px solid var(--neutral-stroke-layer-rest, rgba(255, 255, 255, 0.16));
+    border: 1px solid rgba(255, 255, 255, 0.16);
     background: rgba(255, 255, 255, 0.03);
 }
 
@@ -124,26 +123,47 @@ a:hover {
 }
 
 .stream-name {
-    margin: 0;
+  margin: 0;
     font-size: 1.1rem;
 }
 
 .stream-url {
     word-break: break-all;
-    color: var(--neutral-foreground-subtle, rgba(255, 255, 255, 0.72));
+    color: rgba(255, 255, 255, 0.72);
 }
 
 .stream-description {
-    color: var(--neutral-foreground-subtle, rgba(255, 255, 255, 0.75));
+    color: rgba(255, 255, 255, 0.75);
+}
+
+/* MudBlazor overrides for better integration */
+.mud-tabs {
+    background: transparent !important;
+}
+
+.mud-tabs-panels {
+    padding: 0 !important;
+}
+
+.mud-tab {
+    text-transform: none !important;
+}
+
+.mud-paper {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.mud-chip {
+    background-color: rgba(255, 255, 255, 0.12) !important;
 }
 
 @media (max-width: 720px) {
     .dashboard-shell {
-        padding: 28px 12px 48px;
+        padding: 16px 0;
     }
 
     .card-heading {
-        align-items: flex-start;
+   align-items: flex-start;
     }
 
     .volume-row {
@@ -152,7 +172,7 @@ a:hover {
         gap: 12px;
     }
 
-    .volume-value {
+  .volume-value {
         text-align: left;
     }
 }

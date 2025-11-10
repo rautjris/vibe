@@ -1,16 +1,18 @@
 using Microsoft.Extensions.Options;
-using Microsoft.FluentUI.AspNetCore.Components;
+using MudBlazor.Services;
 using MySpeaker.Components;
 using MySpeaker.Models;
 using MySpeaker.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddMudServices();
+
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddFluentUIComponents();
 
 builder.Services.Configure<SpeakerOptions>(builder.Configuration.GetSection("Speaker"));
 
