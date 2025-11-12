@@ -1,225 +1,69 @@
 ﻿@page "/"
 
-@using System.Globalization
-
 @inject ISpeakerApi Speaker
 @inject StreamStore StreamStore
 @inject ILogger<Home> Logger
 
-<PageTitle>Dashboard</PageTitle>
+<PageTitle>Controls</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="dashboard-shell">
-    <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
-        <MudTabPanel Text="Playback status">
-            <MudPaper Elevation="2" Class="pa-4">
-                <MudStack Spacing="4">
-                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start" Class="card-heading">
-                        <div class="card-heading__text">
-                            <MudText Typo="Typo.h5" Class="card-title">Playback Status</MudText>
-                            <MudText Typo="Typo.caption" Class="card-subtitle">Live data from the speaker</MudText>
-                        </div>
-                        <MudButton Variant="Variant.Text" Disabled="@_isBusy" OnClick="() => RefreshStatusAsync(false, true)">
-                            Refresh
-                        </MudButton>
-                    </MudStack>
+    <MudStack Spacing="4">
+        @if (!string.IsNullOrWhiteSpace(_errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Filled" CloseIcon="@Icons.Material.Filled.Close" CloseIconClicked="() => _errorMessage = null">
+                @_errorMessage
+            </MudAlert>
+        }
+        else if (!string.IsNullOrWhiteSpace(_successMessage))
+        {
+            <MudAlert Severity="Severity.Success" Variant="Variant.Filled" CloseIcon="@Icons.Material.Filled.Close" CloseIconClicked="() => _successMessage = null">
+                @_successMessage
+            </MudAlert>
+        }
 
-                    @if (_status is null)
-                    {
-                        <div class="empty-state">
-                            <MudText>Speaker status is unavailable. Check the connection settings and try again.</MudText>
-                        </div>
-                    }
-                    else
-                    {
-                        <MudStack Spacing="5">
-                            <MudStack Spacing="2">
-                                <MudText Typo="Typo.h6" Class="status-title">@_status.Title</MudText>
-                                <MudText Typo="Typo.body2" Class="status-meta">@_status.Artist</MudText>
-                                <MudText Typo="Typo.body2" Class="status-meta">@_status.Album</MudText>
-                            </MudStack>
-
-                            <MudStack Row="true" Spacing="2">
-                                <MudChip T="string" Size="Size.Small">@_status.Mode</MudChip>
-                                <MudChip T="string" Size="Size.Small">@_status.StatusLabel</MudChip>
-                                <MudChip T="string" Size="Size.Small">@_status.Channel</MudChip>
-                            </MudStack>
-
-                            <div class="detail-grid">
-                                <div class="detail-tile">
-                                    <span class="detail-label">Position</span>
-                                    <span class="detail-value">@_status.PositionDisplay</span>
-                                </div>
-                                <div class="detail-tile">
-                                    <span class="detail-label">Playlist</span>
-                                    <span class="detail-value">@_status.PlaylistDisplay</span>
-                                </div>
-                                <div class="detail-tile">
-                                    <span class="detail-label">Loop Mode</span>
-                                    <span class="detail-value">@_status.LoopMode</span>
-                                </div>
-                                <div class="detail-tile">
-                                    <span class="detail-label">Volume</span>
-                                    <span class="detail-value">@_status.Volume</span>
-                                </div>
-                                <div class="detail-tile">
-                                    <span class="detail-label">Mute</span>
-                                    <span class="detail-value">@(_status.IsMuted ? "Muted" : "Active")</span>
-                                </div>
-                                <div class="detail-tile">
-                                    <span class="detail-label">Equalizer</span>
-                                    <span class="detail-value">@(_status.Equalizer is null ? "—" : _status.Equalizer)</span>
-                                </div>
-                            </div>
-                        </MudStack>
-                    }
+        <MudPaper Elevation="2" Class="pa-4">
+            <MudStack Spacing="3">
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.h6">Volume</MudText>
+                    <MudButton Variant="Variant.Text" Disabled="@_isBusy" StartIcon="@Icons.Material.Filled.Refresh" OnClick="() => RefreshStatusAsync(false, true)">Refresh</MudButton>
                 </MudStack>
-            </MudPaper>
-        </MudTabPanel>
-
-        <MudTabPanel Text="Controls">
-            <MudStack Spacing="4">
-                @if (!string.IsNullOrWhiteSpace(_errorMessage))
-                {
-                    <MudAlert Severity="Severity.Error" Variant="Variant.Filled" CloseIcon="@Icons.Material.Filled.Close" CloseIconClicked="() => _errorMessage = null">
-                        @_errorMessage
-                    </MudAlert>
-                }
-                else if (!string.IsNullOrWhiteSpace(_successMessage))
-                {
-                    <MudAlert Severity="Severity.Success" Variant="Variant.Filled" CloseIcon="@Icons.Material.Filled.Close" CloseIconClicked="() => _successMessage = null">
-                        @_successMessage
-                    </MudAlert>
-                }
-
-                <MudPaper Elevation="2" Class="pa-4">
-                    <MudStack Spacing="5">
-                        <div class="card-heading__text">
-                            <MudText Typo="Typo.h5" Class="card-title">Controls</MudText>
-                            <MudText Typo="Typo.caption" Class="card-subtitle">Send commands directly to the speaker</MudText>
-                        </div>
-
-                        <MudStack Spacing="5">
-                            <MudStack Spacing="3">
-                                <MudText Typo="Typo.h6" Class="section-title">Transport</MudText>
-                                <MudStack Row="true" Spacing="2">
-                                    <MudButton Variant="Variant.Text" Disabled="@_isBusy" OnClick="PlayPreviousAsync">Prev</MudButton>
-                                    <MudButton Variant="Variant.Text" Disabled="@_isBusy" OnClick="PauseAsync">Pause</MudButton>
-                                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@_isBusy" OnClick="ResumeAsync">Play</MudButton>
-                                    <MudButton Variant="Variant.Text" Disabled="@_isBusy" OnClick="StopAsync">Stop</MudButton>
-                                    <MudButton Variant="Variant.Text" Disabled="@_isBusy" OnClick="PlayNextAsync">Next</MudButton>
-                                </MudStack>
-                            </MudStack>
-
-                            <MudStack Spacing="3">
-                                <MudText Typo="Typo.h6" Class="section-title">Volume</MudText>
-                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Class="volume-row">
-                                    <MudSlider T="int" Value="_volume" Min="0" Max="100" Step="1" Disabled="@_isBusy" Color="Color.Primary" ValueChanged="@OnVolumeChangedAsync" Style="flex:1; min-width:220px;" />
-                                    <MudText Class="volume-value">@_volume%</MudText>
-                                </MudStack>
-                                <MudStack Row="true" Spacing="2">
-                                    <MudButton Variant="Variant.Text" Disabled="@_isBusy" OnClick="VolumeDownAsync">-6</MudButton>
-                                    <MudButton Variant="Variant.Text" Disabled="@_isBusy" OnClick="ToggleMuteAsync">Mute</MudButton>
-                                    <MudButton Variant="Variant.Text" Disabled="@_isBusy" OnClick="VolumeUpAsync">+6</MudButton>
-                                </MudStack>
-                            </MudStack>
-
-                            <MudStack Spacing="3">
-                                <MudText Typo="Typo.h6" Class="section-title">Input Source</MudText>
-                                <MudSelect T="string" Value="_selectedSource" Label="Select an input" Variant="Variant.Outlined" Disabled="@_isBusy" ValueChanged="@OnSourceChangedAsync" Style="min-width:240px;">
-                                    @foreach (var source in InputSources)
-                                    {
-                                        <MudSelectItem T="string" Value="@source.Key">@source.Label</MudSelectItem>
-                                    }
-                                </MudSelect>
-                            </MudStack>
-
-                            <MudStack Spacing="3">
-                                <MudText Typo="Typo.h6" Class="section-title">Loop Mode</MudText>
-                                <MudSelect T="string" Value="_selectedLoop" Label="Select loop mode" Variant="Variant.Outlined" Disabled="@_isBusy" ValueChanged="@OnLoopChangedAsync" Style="min-width:240px;">
-                                    @foreach (var loop in LoopModes)
-                                    {
-                                        <MudSelectItem T="string" Value="@loop.Value.ToString(CultureInfo.InvariantCulture)">@loop.Label</MudSelectItem>
-                                    }
-                                </MudSelect>
-                            </MudStack>
-
-                            <MudStack Spacing="3">
-                                <MudText Typo="Typo.h6" Class="section-title">Quick Stream</MudText>
-                                <MudStack Row="true" Spacing="3">
-                                    <MudTextField T="string" @bind-Value="_quickStreamUrl" Placeholder="https://" Variant="Variant.Outlined" Disabled="@_isBusy" Style="flex:1; min-width:260px;" />
-                                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(_isBusy || string.IsNullOrWhiteSpace(_quickStreamUrl))" OnClick="PlayQuickUrl">Play</MudButton>
-                                </MudStack>
-                            </MudStack>
-                        </MudStack>
-                    </MudStack>
-                </MudPaper>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+                    <MudSlider T="int" Value="_volume" Min="0" Max="100" Step="1" Disabled="@_isBusy" Color="Color.Primary" ValueChanged="@OnVolumeChangedAsync" Style="flex:1; min-width:220px;" />
+                    <MudText Class="volume-value">@_volume%</MudText>
+                </MudStack>
+                <MudStack Row="true" Spacing="2">
+                    <MudButton Variant="Variant.Text" Disabled="@_isBusy" StartIcon="@Icons.Material.Filled.VolumeDown" OnClick="VolumeDownAsync">-6</MudButton>
+                    <MudButton Variant="Variant.Text" Disabled="@_isBusy" StartIcon="@(_status?.IsMuted == true ? Icons.Material.Filled.VolumeOff : Icons.Material.Filled.VolumeUp)" OnClick="ToggleMuteAsync">@(_status?.IsMuted == true ? "Unmute" : "Mute")</MudButton>
+                    <MudButton Variant="Variant.Text" Disabled="@_isBusy" StartIcon="@Icons.Material.Filled.VolumeUp" OnClick="VolumeUpAsync">+6</MudButton>
+                </MudStack>
             </MudStack>
-        </MudTabPanel>
+        </MudPaper>
 
-        <MudTabPanel Text="Saved streams">
-            <MudStack Spacing="4">
-                <MudPaper Elevation="2" Class="pa-4">
-                    <MudStack Spacing="5">
-                        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start" Class="card-heading">
-                            <div class="card-heading__text">
-                                <MudText Typo="Typo.h5" Class="card-title">Saved Streams</MudText>
-                                <MudText Typo="Typo.caption" Class="card-subtitle">Keep your favourite stations handy</MudText>
-                            </div>
-                            <MudButton Variant="Variant.Text" Disabled="@_isBusy" OnClick="BeginAddStream">New Stream</MudButton>
-                        </MudStack>
-
-                        <MudStack Spacing="3">
-                            @if (_streams.Count == 0)
-                            {
-                                <MudText>No streams saved yet. Add your first stream below.</MudText>
-                            }
-                            else
-                            {
-                                @foreach (var stream in _streams)
-                                {
-                                    <MudPaper Elevation="1" Class="stream-card pa-3">
-                                        <MudStack Spacing="2">
-                                            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Start" Class="stream-card__header">
-                                                <MudText Typo="Typo.h6" Class="stream-name">@stream.Name</MudText>
-                                                <MudStack Row="true" Spacing="2">
-                                                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" Disabled="@_isBusy" OnClick="() => PlaySavedStream(stream)">Play</MudButton>
-                                                    <MudButton Variant="Variant.Text" Size="Size.Small" Disabled="@_isBusy" OnClick="() => BeginEditStream(stream)">Edit</MudButton>
-                                                    <MudButton Variant="Variant.Outlined" Size="Size.Small" Disabled="@_isBusy" OnClick="() => DeleteStreamAsync(stream)">Delete</MudButton>
-                                                </MudStack>
-                                            </MudStack>
-                                            <MudText Typo="Typo.body2" Class="stream-url">@stream.Url</MudText>
-                                            @if (!string.IsNullOrWhiteSpace(stream.Description))
-                                            {
-                                                <MudText Typo="Typo.body2" Class="stream-description">@stream.Description</MudText>
-                                            }
-                                        </MudStack>
-                                    </MudPaper>
-                                }
-                            }
-                        </MudStack>
-
-                        <EditForm Model="_draft" OnValidSubmit="SaveStreamAsync">
-                            <DataAnnotationsValidator />
-                            <MudStack Spacing="3">
-                                <MudTextField T="string" @bind-Value="_draft.Name" Label="Stream name" Variant="Variant.Outlined" Required="true" Disabled="@_isBusy" />
-                                <ValidationMessage For="() => _draft.Name" />
-                                <MudTextField T="string" @bind-Value="_draft.Url" Label="Stream URL" Variant="Variant.Outlined" Required="true" Disabled="@_isBusy" />
-                                <ValidationMessage For="() => _draft.Url" />
-                                <MudTextField T="string" @bind-Value="_draft.Description" Label="Notes (optional)" Variant="Variant.Outlined" Lines="3" Disabled="@_isBusy" />
-                                <MudStack Row="true" Spacing="2">
-                                    <MudButton Variant="Variant.Filled" Color="Color.Primary" ButtonType="ButtonType.Submit" Disabled="@_isBusy">@_formActionLabel</MudButton>
-                                    @if (_isEditing)
-                                    {
-                                        <MudButton Variant="Variant.Text" ButtonType="ButtonType.Button" Disabled="@_isBusy" OnClick="BeginAddStream">Cancel</MudButton>
-                                    }
-                                </MudStack>
+        <MudPaper Elevation="2" Class="pa-4">
+            <MudStack Spacing="3">
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.h6">Saved Streams</MudText>
+                    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.List" Href="/streams">Manage Streams</MudButton>
+                </MudStack>
+                @if (_streams.Count == 0)
+                {
+                    <MudText>No streams saved.</MudText>
+                }
+                else
+                {
+                    <MudStack Spacing="2">
+                        @foreach (var stream in _streams)
+                        {
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="stream-row">
+                                <MudText Typo="Typo.body1" Style="flex:1">@stream.Name</MudText>
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" Disabled="@_isBusy" StartIcon="@Icons.Material.Filled.PlayArrow" OnClick="() => PlaySavedStream(stream)">Play</MudButton>
                             </MudStack>
-                        </EditForm>
+                        }
                     </MudStack>
-                </MudPaper>
+                }
             </MudStack>
-        </MudTabPanel>
-    </MudTabs>
+        </MudPaper>
+    </MudStack>
 </MudContainer>
 
 

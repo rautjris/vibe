@@ -1,0 +1,204 @@
+@page "/streams"
+
+@inject StreamStore StreamStore
+@inject ILogger<Streams> Logger
+@inject ISpeakerApi Speaker
+
+<PageTitle>Streams</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="dashboard-shell">
+    <MudStack Spacing="4">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ArrowBack" Href="/">Back to Controls</MudButton>
+            <MudText Typo="Typo.h5">Manage Streams</MudText>
+        </MudStack>
+        @if (!string.IsNullOrWhiteSpace(_errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Filled" CloseIcon="@Icons.Material.Filled.Close" CloseIconClicked="() => _errorMessage = null">@_errorMessage</MudAlert>
+        }
+        else if (!string.IsNullOrWhiteSpace(_successMessage))
+        {
+            <MudAlert Severity="Severity.Success" Variant="Variant.Filled" CloseIcon="@Icons.Material.Filled.Close" CloseIconClicked="() => _successMessage = null">@_successMessage</MudAlert>
+        }
+
+        <MudPaper Elevation="2" Class="pa-4">
+            <MudStack Spacing="3">
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.h6">Saved Streams</MudText>
+                    <MudButton Variant="Variant.Text" Disabled="@_isBusy" StartIcon="@Icons.Material.Filled.Add" OnClick="BeginAddStream">New Stream</MudButton>
+                </MudStack>
+
+                @if (_streams.Count == 0)
+                {
+                    <MudText>No streams saved yet.</MudText>
+                }
+                else
+                {
+                    <MudStack Spacing="2">
+                        @foreach (var stream in _streams)
+                        {
+                            <MudPaper Elevation="1" Class="pa-2">
+                                <MudStack Spacing="1">
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                        <MudText Typo="Typo.body1" Style="flex:1">@stream.Name</MudText>
+                                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" Disabled="@_isBusy" StartIcon="@Icons.Material.Filled.PlayArrow" OnClick="() => PlaySavedStream(stream)">Play</MudButton>
+                                        <MudButton Variant="Variant.Text" Size="Size.Small" Disabled="@_isBusy" StartIcon="@Icons.Material.Filled.Edit" OnClick="() => BeginEditStream(stream)">Edit</MudButton>
+                                        <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small" Disabled="@_isBusy" StartIcon="@Icons.Material.Filled.Delete" OnClick="() => DeleteStreamAsync(stream)">Delete</MudButton>
+                                    </MudStack>
+                                    <MudText Typo="Typo.caption">@stream.Url</MudText>
+                                    @if (!string.IsNullOrWhiteSpace(stream.Description))
+                                    {
+                                        <MudText Typo="Typo.caption">@stream.Description</MudText>
+                                    }
+                                </MudStack>
+                            </MudPaper>
+                        }
+                    </MudStack>
+                }
+
+                <EditForm Model="_draft" OnValidSubmit="SaveStreamAsync">
+                    <DataAnnotationsValidator />
+                    <MudStack Spacing="2">
+                        <MudTextField T="string" @bind-Value="_draft.Name" Label="Stream name" Variant="Variant.Outlined" Required="true" Disabled="@_isBusy" />
+                        <ValidationMessage For="() => _draft.Name" />
+                        <MudTextField T="string" @bind-Value="_draft.Url" Label="Stream URL" Variant="Variant.Outlined" Required="true" Disabled="@_isBusy" />
+                        <ValidationMessage For="() => _draft.Url" />
+                        <MudTextField T="string" @bind-Value="_draft.Description" Label="Notes (optional)" Variant="Variant.Outlined" Lines="3" Disabled="@_isBusy" />
+                        <MudStack Row="true" Spacing="2">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" ButtonType="ButtonType.Submit" Disabled="@_isBusy" StartIcon="@Icons.Material.Filled.Save">@_formActionLabel</MudButton>
+                            @if (_isEditing)
+                            {
+                                <MudButton Variant="Variant.Text" ButtonType="ButtonType.Button" Disabled="@_isBusy" StartIcon="@Icons.Material.Filled.Cancel" OnClick="BeginAddStream">Cancel</MudButton>
+                            }
+                        </MudStack>
+                    </MudStack>
+                </EditForm>
+            </MudStack>
+        </MudPaper>
+    </MudStack>
+</MudContainer>
+
+@code {
+    private IReadOnlyList<StreamInfo> _streams = Array.Empty<StreamInfo>();
+    private StreamInfo _draft = new();
+    private bool _isBusy;
+    private string? _errorMessage;
+    private string? _successMessage;
+
+    private string _formActionLabel => _isEditing ? "Update Stream" : "Save Stream";
+    private bool _isEditing => _streams.Any(s => s.Id == _draft.Id);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStreamsAsync();
+    }
+
+    private async Task LoadStreamsAsync()
+    {
+        try
+        {
+            _streams = await StreamStore.GetAllAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load streams");
+            _errorMessage = "Unable to load saved streams.";
+        }
+    }
+
+    private async Task PlaySavedStream(StreamInfo stream)
+    {
+        if (!IsAllowedUrl(stream.Url))
+        {
+            _errorMessage = "Saved stream has unsupported URL scheme.";
+            return;
+        }
+        await SendSpeakerCommand(() => Speaker.PlayUrlAsync(stream.Url), $"Playing {stream.Name}");
+    }
+
+    private async Task DeleteStreamAsync(StreamInfo stream)
+    {
+        _errorMessage = null;
+        _successMessage = null;
+        try
+        {
+            _streams = await StreamStore.DeleteAsync(stream.Id);
+            _successMessage = $"Removed {stream.Name}.";
+            if (_draft.Id == stream.Id)
+            {
+                _draft = new StreamInfo();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to delete stream {Stream}", stream.Name);
+            _errorMessage = "Unable to remove stream.";
+        }
+    }
+
+    private void BeginEditStream(StreamInfo stream)
+    {
+        _errorMessage = null;
+        _successMessage = null;
+        _draft = stream.Clone();
+    }
+
+    private void BeginAddStream()
+    {
+        _errorMessage = null;
+        _successMessage = null;
+        _draft = new StreamInfo();
+    }
+
+    private async Task SaveStreamAsync()
+    {
+        _errorMessage = null;
+        _successMessage = null;
+        try
+        {
+            _streams = await StreamStore.UpsertAsync(_draft);
+            _successMessage = _isEditing ? "Stream updated." : "Stream saved.";
+            _draft = new StreamInfo();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to save stream");
+            _errorMessage = ex.Message;
+        }
+    }
+
+    private async Task SendSpeakerCommand(Func<Task<bool>> callback, string successMessage)
+    {
+        if (_isBusy) return;
+        _isBusy = true;
+        _errorMessage = null;
+        _successMessage = null;
+        try
+        {
+            var ok = await callback();
+            if (ok)
+            {
+                _successMessage = successMessage;
+            }
+            else
+            {
+                _errorMessage = "Speaker did not acknowledge the command.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Speaker command failed");
+            _errorMessage = "Command failed. Check the speaker connection.";
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private static bool IsAllowedUrl(string url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)) return false;
+        return uri.Scheme is "http" or "https";
+    }
+}

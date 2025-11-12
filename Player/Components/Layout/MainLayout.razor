@@ -4,19 +4,11 @@
 <MudDialogProvider />
 <MudSnackbarProvider />
 
-<MudLayout>
-    <MudAppBar Elevation="1" Dense="true" Class="layout-header">
-        <MudStack Spacing="1" Class="layout-header__content">
-            <MudText Typo="Typo.h4" Class="layout-title">MySpeaker</MudText>
-   <MudText Typo="Typo.caption" Class="layout-subtitle">Wireless playback console</MudText>
-  </MudStack>
-    </MudAppBar>
 <MudMainContent Class="layout-main">
-      <section class="layout-content">
- @Body
-        </section>
-    </MudMainContent>
-</MudLayout>
+    <section class="layout-content">
+        @Body
+    </section>
+</MudMainContent>
 
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.

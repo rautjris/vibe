@@ -4,33 +4,62 @@ using System.Globalization;
 
 namespace MySpeaker.Models;
 
+public enum PlayerMode
+{
+    Unknown,
+    Idle,
+    AirPlay,
+    Dlna,
+    NetworkStream,
+    UsbDisk,
+    HttpApi,
+    SpotifyConnect,
+    LineIn,
+    Bluetooth,
+    Optical,
+    LineIn2,
+    UsbDac,
+    MultiroomGuest
+}
+
+public enum LoopMode
+{
+    Unknown,
+    RepeatAll,
+    RepeatOne,
+    ShuffleRepeat,
+    Shuffle,
+    NoRepeat,
+    ShuffleRepeatOne
+}
+
 public sealed class PlayerStatus
 {
-    private static readonly IReadOnlyDictionary<string, string> ModeDescriptions = new Dictionary<string, string>
+    private static readonly Dictionary<string, PlayerMode> ModeMap = new()
     {
-        ["0"] = "Idle",
-        ["1"] = "AirPlay",
-        ["2"] = "DLNA",
-        ["10"] = "Network Stream",
-        ["11"] = "USB Disk",
-        ["20"] = "HTTP API",
-        ["31"] = "Spotify Connect",
-        ["40"] = "Line-In",
-        ["41"] = "Bluetooth",
-        ["43"] = "Optical",
-        ["47"] = "Line-In 2",
-        ["51"] = "USB DAC",
-        ["99"] = "Multiroom Guest",
+        ["0"] = PlayerMode.Idle,
+        ["1"] = PlayerMode.AirPlay,
+        ["2"] = PlayerMode.Dlna,
+        ["10"] = PlayerMode.NetworkStream,
+        ["11"] = PlayerMode.UsbDisk,
+        ["20"] = PlayerMode.HttpApi,
+        ["31"] = PlayerMode.SpotifyConnect,
+        ["40"] = PlayerMode.LineIn,
+        ["41"] = PlayerMode.Bluetooth,
+        ["43"] = PlayerMode.Optical,
+        ["47"] = PlayerMode.LineIn2,
+        ["51"] = PlayerMode.UsbDac,
+        ["99"] = PlayerMode.MultiroomGuest,
     };
 
-    private static readonly IReadOnlyDictionary<string, string> LoopDescriptions = new Dictionary<string, string>
+    private static readonly Dictionary<string, LoopMode> LoopMap = new()
     {
-        ["0"] = "Repeat All",
-        ["1"] = "Repeat One",
-        ["2"] = "Shuffle + Repeat",
-        ["3"] = "Shuffle",
-        ["4"] = "No Repeat",
-        ["5"] = "Shuffle + Repeat One",
+        ["0"] = LoopMode.RepeatAll,
+        ["1"] = LoopMode.RepeatOne,
+        ["2"] = LoopMode.ShuffleRepeat,
+        ["3"] = LoopMode.Shuffle,
+        ["4"] = LoopMode.NoRepeat,
+        ["5"] = LoopMode.ShuffleRepeatOne,
     };
 
     public PlayerStatus(
@@ -55,6 +84,8 @@ public sealed class PlayerStatus
         ChannelCode = channelCode ?? string.Empty;
         ModeCode = modeCode ?? string.Empty;
         LoopCode = loopCode ?? string.Empty;
+        Mode = ModeMap.TryGetValue(ModeCode, out var pm) ? pm : PlayerMode.Unknown;
+        Loop = LoopMap.TryGetValue(LoopCode, out var lm) ? lm : LoopMode.Unknown;
         Equalizer = equalizer;
         RawStatus = rawStatus ?? string.Empty;
         CurrentPosition = currentPosition;
@@ -64,13 +95,19 @@ public sealed class PlayerStatus
         PlaylistIndex = playlistIndex;
         Volume = volume ?? 0;
         IsMuted = isMuted ?? false;
-    Title = string.IsNullOrWhiteSpace(title) ? "(none)" : title;
-    Artist = string.IsNullOrWhiteSpace(artist) ? "(none)" : artist;
-    Album = string.IsNullOrWhiteSpace(album) ? "(none)" : album;
+        Title = string.IsNullOrWhiteSpace(title) ? "(none)" : title;
+        Artist = string.IsNullOrWhiteSpace(artist) ? "(none)" : artist;
+        Album = string.IsNullOrWhiteSpace(album) ? "(none)" : album;
+
+        StatusLabel = string.IsNullOrWhiteSpace(RawStatus)
+            ? "Unknown"
+            : CultureInfo.InvariantCulture.TextInfo.ToTitleCase(RawStatus);
+
+        PositionDisplay = BuildPositionDisplay(CurrentPosition, TotalLength);
+        PlaylistDisplay = BuildPlaylistDisplay(PlaylistCount, PlaylistIndex);
     }
 
     public string DeviceTypeCode { get; }
-
     public string DeviceType => DeviceTypeCode switch
     {
         "0" => "Standalone",
@@ -79,7 +116,6 @@ public sealed class PlayerStatus
     };
 
     public string ChannelCode { get; }
-
     public string Channel => ChannelCode switch
     {
         "0" => "Stereo",
@@ -89,73 +125,43 @@ public sealed class PlayerStatus
     };
 
     public string ModeCode { get; }
-
-    public string Mode => ModeDescriptions.TryGetValue(ModeCode, out var label)
-        ? label
-        : string.IsNullOrEmpty(ModeCode) ? "Unknown" : $"Mode {ModeCode}";
-
+    public PlayerMode Mode { get; }
     public string LoopCode { get; }
-
-    public string LoopMode => LoopDescriptions.TryGetValue(LoopCode, out var label)
-        ? label
-        : string.IsNullOrEmpty(LoopCode) ? "Unknown" : $"Loop {LoopCode}";
+    public LoopMode Loop { get; }
 
     public int? Equalizer { get; }
-
     public string RawStatus { get; }
-
-    public string StatusLabel => string.IsNullOrWhiteSpace(RawStatus)
-        ? "Unknown"
-        : CultureInfo.InvariantCulture.TextInfo.ToTitleCase(RawStatus);
-
     public TimeSpan? CurrentPosition { get; }
-
     public TimeSpan? PlaylistOffset { get; }
-
     public TimeSpan? TotalLength { get; }
-
     public int? PlaylistCount { get; }
-
     public int? PlaylistIndex { get; }
-
     public int Volume { get; }
-
     public bool IsMuted { get; }
-
     public string Title { get; }
-
     public string Artist { get; }
-
     public string Album { get; }
 
-    public string PositionDisplay
-    {
-        get
-        {
-            if (CurrentPosition is null && TotalLength is null)
-            {
-                return "N/A";
-            }
+    public string StatusLabel { get; }
+    public string PositionDisplay { get; }
+    public string PlaylistDisplay { get; }
 
-            var position = CurrentPosition ?? TimeSpan.Zero;
-            var length = TotalLength;
-            return length.HasValue
-                ? string.Format(CultureInfo.InvariantCulture, "{0:mm\\:ss} / {1:mm\\:ss}", position, length.Value)
-                : string.Format(CultureInfo.InvariantCulture, "{0:mm\\:ss}", position);
-        }
+    private static string BuildPositionDisplay(TimeSpan? position, TimeSpan? length)
+    {
+        if (position is null && length is null) return "N/A";
+        var pos = position ?? TimeSpan.Zero;
+        return length.HasValue
+            ? string.Format(CultureInfo.InvariantCulture, "{0:mm\\:ss} / {1:mm\\:ss}", pos, length.Value)
+            : string.Format(CultureInfo.InvariantCulture, "{0:mm\\:ss}", pos);
     }
 
-    public string PlaylistDisplay
+    private static string BuildPlaylistDisplay(int? count, int? index)
     {
-        get
+        if (count is > 0 && index is not null)
         {
-            if (PlaylistCount is > 0 && PlaylistIndex is not null)
-            {
-                var current = Math.Clamp(PlaylistIndex.Value + 1, 1, PlaylistCount.Value);
-                return string.Format(CultureInfo.InvariantCulture, "Track {0} of {1}", current, PlaylistCount.Value);
-            }
-
-            return "N/A";
+            var current = Math.Clamp(index.Value + 1, 1, count.Value);
+            return string.Format(CultureInfo.InvariantCulture, "Track {0} of {1}", current, count.Value);
         }
+        return "N/A";
     }
 }
