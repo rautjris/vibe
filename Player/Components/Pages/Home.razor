@@ -6,7 +6,7 @@
 
 <PageTitle>Controls</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="dashboard-shell">
+<MudContainer MaxWidth="MaxWidth.Small" >
     <MudStack Spacing="4">
         @if (!string.IsNullOrWhiteSpace(_errorMessage))
         {
@@ -16,10 +16,10 @@
         }
         else if (!string.IsNullOrWhiteSpace(_successMessage))
         {
-            <MudAlert Severity="Severity.Success" Variant="Variant.Filled" CloseIcon="@Icons.Material.Filled.Close" CloseIconClicked="() => _successMessage = null">
+@*             <MudAlert Severity="Severity.Success" Variant="Variant.Filled" CloseIcon="@Icons.Material.Filled.Close" CloseIconClicked="() => _successMessage = null">
                 @_successMessage
             </MudAlert>
-        }
+ *@        }
 
         <MudPaper Elevation="2" Class="pa-4">
             <MudStack Spacing="3">
