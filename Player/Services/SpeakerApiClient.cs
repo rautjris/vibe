@@ -152,31 +152,19 @@ public sealed class SpeakerApiClient : ISpeakerApi
 
         private static bool? ParseBool(string? value)
         {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                return null;
-            }
-
+            if (string.IsNullOrWhiteSpace(value)) return null;
             return value.Trim() == "1";
         }
 
         private static TimeSpan? ParseMillis(string? value)
         {
-            if (!int.TryParse(value, out var millis))
-            {
-                return null;
-            }
-
+            if (!int.TryParse(value, out var millis)) return null;
             return TimeSpan.FromMilliseconds(Math.Max(0, millis));
         }
 
         private static string? DecodeHex(string? value)
         {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                return null;
-            }
-
+            if (string.IsNullOrWhiteSpace(value)) return null;
             try
             {
                 var bytes = Convert.FromHexString(value);
